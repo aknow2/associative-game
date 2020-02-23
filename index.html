@@ -1,0 +1,225 @@
+ <html>
+     <head>
+         <title>動物れんそうゲーム</title>
+    </head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.8.0/css/bulma.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css">
+    <style>
+        .rbox {
+            display: flex;
+            justify-content: center;
+            width: 30%;
+            height: 90px;
+        }
+    </style>
+ <body>
+ <div id="app" style="width: 100%; height: 100%;" >
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <div class="navbar-item">
+                <h1 class="title">
+                動物れんそうゲーム
+                </h1>
+            </div>
+        </div>
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <h1 class="subtitle">
+                ベストスコア: {{best}}
+                </h1>
+            </div>
+        </div>
+    </nav>
+    <div style="width: 100%; height: 80%; display: flex; justify-content: center; align-items: center;">
+        <div v-if=isTop>
+        <button class="button is-rounded is-primary" style="font-size: 32px;" @click="start">スタート</button>
+        </div>
+        <div v-if=isPlaying style="width: 100%; height: 100%;">
+            <div style="display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; width: 100%; height: 100%;">
+                <div style="width: 100%; display: flex; justify-content: space-evenly;">
+                    <div class="rbox notification is-link is-light">
+                        <div style="font-size: 32px;">
+                                <span class="icon">
+                                    <i class="fas fa-tasks"></i>
+                                </span>
+                                のこり{{remaining}}問
+                        </div>
+                    </div>
+                    <div class="rbox notification is-success is-light">
+                        <div style="font-size: 32px;">
+                            <span class="icon">
+                                <i class="fas fa-star"></i>
+                            </span>
+                            スコア {{total}}
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: center; width: 100%; background-color: bisque; ">
+                        <p style="font-size: 128px;">{{msg}}</p>
+                </div>
+                <p style="font-size: 42;"><u>今,答えると{{point}}点!!</u></p>
+                <div style="display: flex; justify-content: space-between; width: 80%;">
+                    <button class="button is-rounded is-info" style="font-size: 28px;" @click="refresh">パス！</button>
+                    <button class="button is-rounded is-success" style="font-size: 28px;" @click="bonus">ボーナス!</button>
+                    <button class="button is-rounded is-danger" style="font-size: 28px;" @click="hint"> おてつき </button>
+                    <button class="button is-rounded is-warning" style="font-size: 28px;" @click="hint"> ヒント </button>
+                    <button class="button is-rounded is-primary" style="font-size: 28px;" @click="pass"> つぎへ </button>
+                </div>
+            </div>
+        </div>
+        <div v-if=isResult>
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                <p style="font-size: 128px;">点数  {{total}}!!!</p>
+                <button class="button is-rounded is-primary" style="font-size: 32px;" @click="start">もう一回やる</button>
+            </div>
+        </div>
+    </div>
+   </div>
+   <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+  <script>
+    const shuffle = (arr) => {
+        result = arr.slice();
+        let i, j, temp;
+        i = arr.length;
+        while (--i) {
+            j = Math.floor(Math.random() * (i + 1));
+            temp = result[i];
+            result[i] = result[j];
+            result[j] = temp;
+        }
+        return result;
+    };
+    const initData = [
+             'いぬ',
+             'ねこ',
+             'あざらし',
+             'モグラ',
+             'ぺんぎん',
+             'ドラゴン',
+             'アルパカ',
+             'しか',
+             'ライオン',
+             'さい',
+             'カバ',
+             'キリン',
+             'きんぎょ',
+             'アルマジロ',
+             'カンガルー',
+             'コアラ',
+             'はりねずみ',
+             'マンボウ',
+             'ダイオウイカ',
+             'たこ',
+             'アシカ',
+             'トラ',
+             'シャケ',
+             'しまうま',
+             'バク',
+             'カワウソ',
+             'ジャガー',
+             'ラッコ',
+             'へび',
+             'シャチ',
+             'ポニー',
+             'トナカイ',
+             'ハムスター',
+             'アリクイ',
+             'ミーアキャット',
+             'うさぎ',
+             'だちょう',
+             'サバ',
+             'いっかく',
+             'オオカミ',
+             'ぞう',
+             'なまけもの',
+             'しろくま',
+             'クジラ',
+             'イルカ',
+             'レッサーパンダ',
+             'ひつじ',
+             'ねずみ',
+             'パンダ',
+             'くま',
+             'リス',
+             'モモンガ',
+             'ゴリラ',
+             'うし',
+             'やぎ',
+             'さる',
+             'インコ',
+             'らくだ',
+             'こうもり',
+             'いのしし',
+             'ぶた',
+         ]
+     const status = {
+        top: 'top',
+        playing: 'playing',
+        result: 'result`'
+     };
+     new Vue({
+       el: "#app",
+       data: {
+        status: status.top,
+        questions: [], 
+        msg: '',
+        point: 10,
+        total: 0,
+        remaining: 10,
+        best: 0,
+       },
+       computed: {
+        isTop() {
+            return this.status === status.top
+        },
+        isPlaying() {
+            return this.status === status.playing
+        },
+        isResult() {
+            return this.status === status.result
+        },
+       },
+       methods: {
+         start() {
+            this.status = status.playing;
+            this.questions = shuffle(initData)
+            this.msg = this.questions.shift()
+            this.point = 10;
+            this.total = 0;
+            this.remaining = 10;
+         },
+         bonus() {
+            this.point++;
+         },
+         refresh() {
+            const temp = this.msg;
+            this.msg = this.questions.shift()
+            this.questions.push(temp)
+         },
+         pass(){
+           this.msg = this.questions.shift()
+           this.total += this.point;
+           this.point = 10
+           this.remaining--
+           if (this.remaining === 0) {
+            this.status = status.result
+            if (this.total > this.best) {
+                localStorage.setItem('best_score', this.total)
+                this.best = this.total
+            }
+           }
+         },
+         hint() {
+            this.point--;
+         },
+       },
+       mounted() {
+           const score = localStorage.getItem('best_score')
+           if (score) {
+               this.best = score;
+           }
+       }
+     })
+   </script>
+ </body>
+ </html>
