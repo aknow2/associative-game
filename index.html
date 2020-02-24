@@ -16,7 +16,7 @@
  <div id="app" style="width: 100%; height: 100%;" >
     <nav class="navbar" role="navigation" aria-label="main navigation">
         <div class="navbar-brand">
-            <div class="navbar-item">
+            <div class="navbar-item" @click="toTop">
                 <h1 class="title">
                 れんそうゲーム
                 </h1>
@@ -63,7 +63,7 @@
                     <button class="button is-rounded is-success" style="font-size: 28px;" @click="bonus">ボーナス!</button>
                     <button class="button is-rounded is-danger" style="font-size: 28px;" @click="hint"> おてつき </button>
                     <button class="button is-rounded is-warning" style="font-size: 28px;" @click="hint"> ヒント </button>
-                    <button class="button is-rounded is-primary" style="font-size: 28px;" @click="pass"> つぎへ </button>
+                    <button :class="nextBtnClasses" style="font-size: 28px;" @click="pass"> つぎへ </button>
                 </div>
             </div>
         </div>
@@ -178,6 +178,7 @@
         total: 0,
         remaining: 10,
         best: 0,
+        disableNext: false,
        },
        computed: {
         isTop() {
@@ -189,15 +190,40 @@
         isResult() {
             return this.status === status.result
         },
+        nextBtnClasses() {
+            if (this.disableNext) {
+                return "button is-rounded is-disable"
+            } else {
+                return "button is-rounded is-primary" 
+            }
+        }
        },
        methods: {
+        toTop() {
+            location.reload()
+        },
          start() {
             this.status = status.playing;
             this.questions = shuffle(initData)
-            this.msg = this.questions.shift()
             this.point = 10;
             this.total = 0;
             this.remaining = 10;
+            this.nextQuestion();
+         },
+         nextQuestion() {
+           this.disableNext = true;
+           const nextFrame = (count = 0) => {
+            if (count > 80) { 
+                this.msg = this.questions.shift()
+                this.disableNext = false;
+            } else {
+                requestAnimationFrame(() => {
+                    this.msg = this.questions[Math.floor(Math.random() * this.questions.length)]
+                    nextFrame(count + 1)
+                })
+            }
+           };
+           nextFrame();
          },
          bonus() {
             this.point++;
@@ -206,9 +232,13 @@
             const temp = this.msg;
             this.msg = this.questions.shift()
             this.questions.push(temp)
+            this.questions = shuffle(this.questions)
          },
          pass(){
-           this.msg = this.questions.shift()
+           if (this.disableNext) {
+               return
+           }
+
            this.total += this.point;
            this.point = 10
            this.remaining--
@@ -218,6 +248,8 @@
                 localStorage.setItem('best_score', this.total)
                 this.best = this.total
             }
+           } else {
+            this.nextQuestion()
            }
          },
          hint() {
